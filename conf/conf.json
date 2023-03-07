@@ -1,0 +1,15 @@
+{
+    "service_host": "localhost",
+    "service_port": 5555,
+    "data": {
+        "field_data": "https://storage.googleapis.com/software_engineering_interview/field_data.csv",
+        "species": "https://storage.googleapis.com/software_engineering_interview/species.csv"
+    },
+    "database": {
+        "db_name": "LandLifeDB",
+        "hostname": "localhost",
+        "user": "root",
+        "password": ""
+    }
+
+}
