@@ -1,124 +1,55 @@
-#!/usr/bin/env 
+#!/usr/bin/env
 
 from flask import Flask
-import pymysql
-import requests
-import csv
+from db_handler import DB_Handler
 import json
 import os
 
+#   Define the configuration file location and parse to dict
 dirname = os.path.dirname(__file__)
 with open(dirname + '/../conf/conf.json') as file:
     conf = json.load(file)
 
-def create_DB(name):
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"])
-    cur = con.cursor()
-    cur.execute("SHOW DATABASES")
-    dbs=cur.fetchall()
-    if name not in str(dbs):
-        cur.execute("CREATE DATABASE "+ conf["database"]["db_name"])
-
-    cur.close()
-
-def create_tables():
-
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"], db=conf["database"]["db_name"])
-    cur = con.cursor()
-    cur.execute("SHOW TABLES")
-    tables=cur.fetchall()
-    print(tables)
-    if 'field_data' not in str(tables):
-        cur.execute("CREATE TABLE field_data (individual_tree_id int, species_id int, method varchar(32), height int, health int, year_monitored int)")
-    if 'species' not in str(tables):
-        cur.execute("CREATE TABLE species (tree_species_id int, latin_name varchar(32))")
-
-    cur.close()
-
-
-#Retrieves data from CSV and converts in DictReader object
-def data_retrieval(url):
-    data = requests.get(url).content.decode('utf-8')
-    if ';' in str(data):
-        csv_reader = csv.DictReader(data.splitlines(), delimiter=';')
-    elif ',' in str(data):
-        csv_reader = csv.DictReader(data.splitlines(), delimiter=',')
-    return csv_reader
-
-def insert_in_field_data(data):
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"], db=conf["database"]["db_name"])
-    for tab in data:
-        cur=con.cursor()
-        sql = """insert into field_data (individual_tree_id, species_id, method, height, health, year_monitored)
-        values (%s, %s, %s, %s, %s, %s) 
-        """
-        cur.execute(sql,(tab["individual_tree_id"],tab["species_id"],tab["method"],tab["height"],tab["health"],tab["year_monitored"]))
-    con.commit()
-    con.close()
-
-def insert_in_species(data):
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"], db=conf["database"]["db_name"])
-    for tab in data:
-        cur=con.cursor()
-        sql = """insert into species (tree_species_id, latin_name)
-        values (%s, %s) 
-        """
-        print((tab["tree_species_id"],tab["latin_name"]))
-        cur.execute(sql,(tab["tree_species_id"],tab["latin_name"]))
-    con.commit()
-    con.close()
-
-def read_from():
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"], db=conf["database"]["db_name"])
-    cur = con.cursor()
-    cur.execute('SELECT * FROM species')
-
-    queryRes = cur.fetchall()
-    print(queryRes)
-    con.close()
-
-
-create_DB(conf["database"]["db_name"])
-create_tables()
-f_data = data_retrieval(field_data)
-specs_data = data_retrieval(species)
-insert_in_field_data(f_data)
-insert_in_species(specs_data)
-read_from()
-
-
-
-def cursorSelect(query):
-    
-    con = pymysql.connect(host=conf["database"]["hostname"], user=conf["database"]["user"], password=conf["database"]["password"])
-    with con.cursor() as cur:
-        cur.execute(query)
-        queryRes = cur.fetchone()
-
-    con.close()
-    return str(queryRes[0])
-
-
-
-
-
-
-
-
+#   Create new DB instance and initialize DB class
+db= DB_Handler(conf)
 
 
 app = Flask(__name__)
 
-versionQ= 'SELECT VERSION()'
-@app.route("/highest-trees", methods=["GET",  "POST"])
-def highest_trees():
-    
-    return cursorSelect(versionQ)
+@app.route("/highest-trees", methods=["GET",  "POST"], defaults={'year': 2021})
+@app.route("/highest-trees/<year>", methods=["GET",  "POST"])
+def highest_trees(year):
+    """Method to define the highest-trees endpoint
+    Accepted Operations: GET, POST
+    Available endpoints:
+        /highest-trees/<year>
+    Default functionallity:
+        The endpoint will be exposed with a default value of year: 2021
+    Returns list of highest trees and year in JSON format
+    """
+    query= 'SELECT * FROM field_data WHERE year_monitored = '+str(year)+' ORDER BY height DESC LIMIT 5'
+    result=db.cursor_select(conf,query)
+    print(result[0][-1])
+    return db.read_highest(result)
 
-@app.route("/best-method-for-species", methods=["GET", "POST"])
-def best_method():
-    return "<p>Hello, Species!</p>"
+@app.route("/best-method-for-species", methods=["GET", "POST"],  defaults={'species_id': 281})
+@app.route("/best-method-for-species/<species_id>", methods=["GET", "POST"])
+def best_method(species_id):
+    """Method to define the best method endpoint
+    Accepted Operations: GET, POST
+    Available endpoints:
+        /best-method-for-species/<species_id>
+    Default functionallity:
+        If no species_id is specified, defaults to 281
+    Returns list in JSON format
+    """
+    query= 'SELECT method, AVG (health) from field_data  WHERE species_id = '+str(species_id)+' GROUP BY method, species_id ORDER BY AVG(health) DESC LIMIT 1'
+    first_match = db.cursor_select(conf, query)
+    query2= 'SELECT * FROM field_data LEFT JOIN species ON field_data.species_id=species.tree_species_id WHERE species_id = '+str(species_id)+' AND method = "'+str(first_match[0][0])+'"'
+    second_match = db.cursor_select(conf, query2)
+    return db.read_best_method(first_match, second_match)
 
+#   Run the Flask application
 app.run(
     debug=False,
     port=conf["service_port"],
