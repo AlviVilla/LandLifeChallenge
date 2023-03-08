@@ -17,7 +17,9 @@ Check if Python3 is installed in your machine
 `python3 --version`
 If not, proceed to install it in your environment
 `sudo apt-get update`
-Recommended to use the version 3.6 for avoiding version conflicts, noting also that the installation for this version include the third-party package `pip3`
+Recommended to use the version 3.6 for avoiding version conflicts, noting also that the installation for this version include the third-party package `pip3`.
+
+
 `sudo apt-get install python3.6`
 
 ### Local MySQL in Linux Ubuntu
@@ -39,6 +41,9 @@ and grant access to create databases by typing:
 ### Cloning the repository
 
 `git@github.com:AlviVilla/LandLifeChallenge.git`
+
+Move to the repository folder
+
 `cd LandLifeChallenge`
 
 ### Installing Python dependencies
