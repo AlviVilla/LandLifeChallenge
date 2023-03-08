@@ -11,7 +11,14 @@ In this case the operator of the code should have an instance of a mySQL server 
 
 The API is developed in python which will require to have the latest version installed in the machine. It will also make use of some PyPI libraries that are referenced in the 'requirements.txt' file.
 
+### Python3 Installation
 
+Check if Python3 is installed in your machine
+`python3 --version`
+If not, proceed to install it in your environment
+`sudo apt-get update`
+Recommended to use the version 3.6 for avoiding version conflicts, noting also that the installation for this version include the third-party package `pip3`
+`sudo apt-get install python3.6`
 
 ### Local MySQL in Linux Ubuntu
 
@@ -42,8 +49,8 @@ and grant access to create databases by typing:
 
 Once the requisites are fullfilled, the only steps left would be to update the configuration file in `conf/conf.json` with the database info and run the main script to deploy the service.
 
-
 `python3 src/main.py`
+
 
 ## Test and Validation
 
