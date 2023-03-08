@@ -5,7 +5,7 @@
 
 The purpose of this document is to explain what technologies has been used and how to prepare the environment to get the service running.
 
-#### Pre-Requisites
+### Pre-Requisites
 
 In this case the operator of the code should have an instance of a mySQL server instance running locally or deployed to be pointed at. Note that the service will perform operations against it to create a DB aswell as to tables to ingest the data provided.
 
@@ -13,7 +13,7 @@ The API is developed in python which will require to have the latest version ins
 
 
 
-##### Local MySQL in Linux Ubuntu
+### Local MySQL in Linux Ubuntu
 
 Installing MariaDB Server into Linux Ubuntu
 `sudo apt update`
@@ -29,23 +29,23 @@ and grant access to create databases by typing:
 `GRANT ALL PRIVILEGES ON *.* TO '<your-username>'@'localhost';`
 
 
-##### Cloning the repository
+### Cloning the repository
 
 `git@github.com:AlviVilla/LandLifeChallenge.git`
 `cd LandLifeChallenge`
 
-##### Installing Python dependencies
+### Installing Python dependencies
 
 `pip3 install -r src/requirements.txt`
 
-### Configuration and Deployment
+## Configuration and Deployment
 
 Once the requisites are fullfilled, the only steps left would be to update the configuration file in `conf/conf.json` with the database info and run the main script to deploy the service.
 
 
 `python3 src/main.py`
 
-### Test and Validation
+## Test and Validation
 
 The service will be running in `localhost` by default, under the port `5555` altough this value can be changed in the configuration file.
 In order to test the endopints, both GET and POST methods are allowed so just by accessing the http://localhost:5555/highest-trees and followed by the corresponding parameter, in this case the year. i.e:  http://localhost:5555/highest-trees/2018 should list the top 5 ocurrences of the dataset with the higher altitude in 2018. 
